@@ -58,7 +58,10 @@ ipc.on('ui-play-or-pause', (event, _) => {
 })
 ipc.on('ui-pause', (event, _) => event.sender.send('player-play-or-pause', player.pause()))
 ipc.on('ui-goto', (event, time) => {
-  event.sender.send('player-goto', player.goto(time))
+  // Resume playing if the song was playing before.
+  player.goto(time)
+  event.sender.send('player-progress', player.progress())
+  event.sender.send('player-play-or-pause', player.song.playing)
 })
 ipc.on('ui-progress', (event, _) => {
   let p = player.progress()

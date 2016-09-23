@@ -10,35 +10,33 @@ function msToMMSS (milliseconds) {
   return `${Math.floor(seconds / 60)}:${('0' + (seconds % 60)).slice(-2)}`
 }
 
+let progressUpdateSchedule
+function scheduleProgressUpdate (playing) {
+  if (playing) {
+    // Schedule progress slider update.
+    progressUpdateSchedule = setInterval(() => {
+      // Ask for playing progress, then
+      // update time current text and progress slider position.
+      // The second part is dealt by receiving 'player-progress' messages
+      ipc.send('ui-progress')
+    }, 15)
+  } else {
+    // Cancel update schedule.
+    clearInterval(progressUpdateSchedule)
+  }
+}
+
 class ProgressSlider {
   constructor () {
     this.range = document.getElementById('progress')
     this.lower = document.getElementById('progress-slider-background-lower')
     this.upper = document.getElementById('progress-slider-background-upper')
-    this.track = document.getElementById('tooktip-track')
     this.tooltip = document.getElementById('progress-tooltip')
 
-    this.range.addEventListener('click', (event) => {
-      let mouseX = event.clientX
-      let rangeLeft = this.range.getBoundingClientRect().left
-      let rangeWidth = this.range.getBoundingClientRect().width
-      // Progress input range width is longer than background track on each
-      // side of 6px.s
-      let trackLeft = rangeLeft + 6
-      let trackWidth = rangeWidth - 12
-      let trackRight = trackLeft + trackWidth
-      if (mouseX >= trackLeft && mouseX <= trackRight) {
-        let distance = mouseX - trackLeft
-        let value = Math.floor(distance / trackWidth * this.range.max)
-
-        this.setValue(value)
-      }
-    })
-    this.range.addEventListener('mousedown', () => ipc.send('ui-pause'))
-    this.range.addEventListener('mouseup', () => {
-      ipc.send('ui-goto', this.range.value)
-      ipc.send('ui-play-or-pause')
-    })
+    this.range.addEventListener('mousedown', () => scheduleProgressUpdate(false))
+    this.range.addEventListener('click', () => this.setValue(this.range.value))
+    // Resume playing if the song was playing.
+    this.range.addEventListener('mouseup', () => ipc.send('ui-goto', parseInt(this.range.value, 10)))
 
     let mousemoveHandler
     this.range.addEventListener('mouseenter', () => {
@@ -70,13 +68,18 @@ class ProgressSlider {
       this.range.removeEventListener('mouseover', mousemoveHandler)
       this.tooltip.className = 'hidden'
     })
+    this.range.addEventListener('input', () => this._updateStyles(this.range.value))
   }
 
   setValue (value) {
+    this.range.value = value
+    this._updateStyles(value)
+  }
+
+  _updateStyles (value) {
     let percent = value / this.range.max
 
     this.range.className = value === 0 ? 'is-lowest-value' : ''
-    this.range.value = value
     this.lower.style.flexGrow = percent
     this.upper.style.flexGrow = 1 - percent
   }
@@ -105,24 +108,6 @@ function setPlayOrPauseButtonState (playing) {
   }
 }
 
-let progressUpdateSchedule
-function scheduleProgressUpdate (playing) {
-  console.log('scheduleProgressUpdate called')
-  if (playing) {
-    // Schedule progress slider update.
-    progressUpdateSchedule = setInterval(() => {
-      // Ask for playing progress, then
-      // update time current text and progress slider position.
-      // The second part is dealt by receiving 'player-progress' messages
-      ipc.send('ui-progress')
-      // console.log('ui-progress event send from renderer')
-    }, 15)
-  } else {
-    // Cancel update schedule.
-    clearInterval(progressUpdateSchedule)
-  }
-}
-
 windowClose.addEventListener('click', () => remote.getCurrentWindow().close())
 playPause.addEventListener('click', () => {
   ipc.send('ui-play-or-pause')
@@ -138,14 +123,12 @@ ipc.on('player-song-change', (event, metadata) => {
   progressSlider.setRangeMax(metadata.length)
 })
 ipc.on('player-play-or-pause', (event, playing) => {
-  console.log('renderer receiving player-play-or-pause event', playing)
   setPlayOrPauseButtonState(playing)
   scheduleProgressUpdate(playing)
 })
 ipc.on('player-progress', (event, progress) => {
   // `progress` is in milliseconds.
   // Update time current text and progress slider position.
-  // console.log('player-progress event received', progress)
   timeCurrent.innerHTML = msToMMSS(progress)
   progressSlider.setValue(progress)
 })
