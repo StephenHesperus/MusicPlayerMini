@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Music Player Mini</title>
+
+    <link rel="stylesheet" type="text/css" href="./css/index.css" media="screen">
+  </head>
+  <body>
+    <!-- All of the Node.js APIs are available in this renderer process. -->
+    <!-- We are using node <script>document.write(process.versions.node)</script>,
+    Chromium <script>document.write(process.versions.chrome)</script>,
+    and Electron <script>document.write(process.versions.electron)</script>. -->
+
+    <div class="container">
+
+      <div class="app">
+
+        <div class="albumcover">
+          <img id="albumcover" src="./images/albumcover_placeholder.png" alt="album cover" />
+        </div>
+
+        <div class="controls">
+
+          <div class="window-close control">
+            <img id="window-close" src="./images/close.svg" alt="window close button" />
+          </div>
+
+          <div id="song-title" class="control">
+            Untitled
+          </div>
+
+          <div class="song-artist-ablum control">
+            <span id="song-artist">
+              Unknown Artist
+            </span>
+             -
+            <span id="song-album">
+              Unknown Album
+            </span>
+          </div>
+
+          <div class="times control">
+            <span id="time-current">1:47</span>
+            <span id="time-total">3:34</span>
+          </div>
+
+          <div class="progress-slider control">
+            <input id="progress" type="range" name="progress" value="107" min="0" max="214" step="1">
+            <div id="progress-tooltip" class="hidden">
+              0:0
+            </div>
+            <div class="progress-slider-background">
+              <div id="progress-slider-background-lower">
+
+              </div>
+              <div id="progress-slider-background-upper">
+
+              </div>
+            </div>
+          </div>
+
+          <div class="buttons control">
+            <div class="button" class="skip-previous">
+              <img id="skip-previous" src="./images/skip_previous.svg" alt="skip previous button" />
+            </div>
+            <div class="button" class="play-pause">
+              <img id="play-pause" src="./images/play.svg" alt="play or pause button" />
+            </div>
+            <div class="button" class="skip-next">
+              <img id="skip-next" src="./images/skip_next.svg" alt="skip next button" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+
+  <script>
+    // You can also require other files to run in this process
+    require('./renderer.js')
+  </script>
+</html>
